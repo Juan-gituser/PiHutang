@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiHutang | Gen-Z Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        },
+                        darkbase: '#09090b', // Sangat gelap (pitch black)
+                        darkcard: '#18181b', // Sedikit lebih terang untuk card
+                    },
+                    boxShadow: {
+                        'neon': '0 0 20px rgba(139, 92, 246, 0.3)',
+                        'bento': '0 8px 30px rgba(0, 0, 0, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.4s ease, color 0.4s ease; }
+        
+        /* Modern Backgrounds */
+        body { background-color: #fafafa; }
+        .dark body { background-color: #09090b; }
+
+        /* Aesthetic Orbs */
+        .bg-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4; z-index: -1; pointer-events: none;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 { top: -10%; left: -10%; width: 40vw; height: 40vw; background: #c4b5fd; }
+        .orb-2 { bottom: -10%; right: -10%; width: 30vw; height: 30vw; background: #f9a8d4; }
+        .dark .orb-1 { background: rgba(124, 58, 237, 0.15); }
+        .dark .orb-2 { background: rgba(225, 29, 72, 0.15); }
+
+        /* Bento Box Cards */
+        .bento-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05); 
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dark .bento-card { 
+            background: rgba(24, 24, 27, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .bento-card:hover { transform: translateY(-3px); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+
+        /* Animations */
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(20px, 20px) scale(1.05); } }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .toast-enter { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        /* Table Styles (Modernized) */
+        .table-compact { border-spacing: 0 8px; border-collapse: separate; }
+        .table-compact th { padding: 1rem; border-bottom: none; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+        .table-compact td { padding: 1rem; background: rgba(255,255,255,0.5); }
+        .table-compact tr td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+        .table-compact tr td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+        
+        .dark .table-compact td { background: rgba(39, 39, 42, 0.4); }
+        .table-compact tbody tr { transition: transform 0.2s; }
+        .table-compact tbody tr:hover { transform: scale(1.01); background: rgba(255,255,255,0.9); }
+        .dark .table-compact tbody tr:hover { background: rgba(63, 63, 70, 0.6); }
+        
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 100; display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+    </style>
+</head>
+<body class="text-zinc-800 dark:text-zinc-200 h-screen overflow-hidden flex selection:bg-brand-500 selection:text-white relative">
+
+    <!-- Ambient Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <!-- Mobile Hamburger -->
+    <button onclick="toggleMobileSidebar()" class="lg:hidden fixed top-5 left-5 z-50 p-2.5 bg-white/80 dark:bg-darkcard/80 backdrop-blur-md rounded-2xl shadow-sm border border-black/5 dark:border-white/5">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white/60 dark:bg-darkcard/60 backdrop-blur-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col border-r border-black/5 dark:border-white/5 shadow-2xl lg:shadow-none">
+        <div class="p-8 flex items-center justify-between">
+            <h1 class="text-2xl font-black tracking-tighter flex items-center gap-1 text-gradient">
+                <i data-lucide="scan-face" class="w-7 h-7 text-brand-500"></i> PiHutang
+            </h1>
+            <button onclick="toggleMobileSidebar()" class="lg:hidden text-zinc-400 hover:text-zinc-800 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm bg-zinc-900 text-white dark:bg-white dark:text-black transition-all hover:scale-[1.02] shadow-bento">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Overview 👀
+            </button>
+            <button onclick="switchTab('catat')" id="nav-catat" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                <i data-lucide="zap" class="w-5 h-5"></i> Spill Transaksi 💸
+            </button>
+            <button onclick="switchTab('tagihan')" id="nav-tagihan" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                <i data-lucide="receipt-text" class="w-5 h-5"></i> List Tagihan 📝
+            </button>
+            <div class="py-2"></div>
+            <p class="px-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-2">Circle / Relasi</p>
+            <button onclick="switchTab('teman')" id="nav-teman" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                <i data-lucide="users-round" class="w-5 h-5"></i> Bestie Score 🌟
+            </button>
+            <button onclick="switchTab('blacklist')" id="nav-blacklist" class="sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all">
+                <i data-lucide="skull" class="w-5 h-5"></i> Red Flag Zone 🚩
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-black/5 dark:border-white/5 space-y-3">
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                <i data-lucide="moon" id="theme-icon" class="w-5 h-5"></i> <span id="theme-text">Dark Mode</span>
+            </button>
+            <div class="flex gap-2">
+                <button onclick="downloadBackup()" class="flex-1 flex justify-center items-center p-3 rounded-2xl font-bold bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-brand-500 hover:text-white transition-all group" title="Backup Data">
+                    <i data-lucide="cloud-download" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                </button>
+                <button onclick="document.getElementById('import-file').click()" class="flex-1 flex justify-center items-center p-3 rounded-2xl font-bold bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-brand-500 hover:text-white transition-all group" title="Restore Data">
+                    <i data-lucide="cloud-upload" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                </button>
+                <input type="file" id="import-file" class="hidden" accept=".json" onchange="restoreBackup(event)">
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay mobile -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto relative p-5 pt-20 lg:pt-10 md:p-10 w-full no-scrollbar">
+        
+        <!-- TAB: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content max-w-5xl mx-auto space-y-6">
+            <header class="mb-10">
+                <div class="inline-flex items-center gap-1.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 px-3 py-1 rounded-full text-xs font-black tracking-wide mb-4">
+                    <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span> SUMMARY PORTFOLIO
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black tracking-tighter">Halo, Bosque! 👋</h2>
+                <p class="text-zinc-500 mt-2 font-medium">Pantau arus kas lu bareng temen-temen di sini.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Stats (Bento Layout) -->
+                <div class="lg:col-span-2 grid grid-cols-2 gap-6">
+                    <div class="bento-card p-8 col-span-2 relative overflow-hidden group bg-gradient-to-br from-zinc-900 to-black dark:from-white dark:to-zinc-200">
+                        <!-- Glow effect behind text -->
+                        <div class="absolute -right-10 -top-10 w-48 h-48 bg-brand-500 rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-700"></div>
+                        
+                        <div class="flex items-center gap-2 mb-4 relative">
+                            <i data-lucide="wallet" class="w-5 h-5 text-zinc-400 dark:text-zinc-500"></i>
+                            <p class="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Net Worth / Duit Lu</p>
+                        </div>
+                        <p id="net-balance" class="text-4xl md:text-6xl font-black text-white dark:text-black relative z-10 tracking-tighter">Rp 0</p>
+                        <p class="text-sm text-zinc-400 dark:text-zinc-500 mt-3 font-medium">(Uang yang di orang) - (Utang lu ke orang)</p>
+                    </div>
+                    
+                    <div class="bento-card p-6 border-b-4 border-emerald-400 flex flex-col justify-between">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-3 bg-emerald-500/10 rounded-2xl"><i data-lucide="arrow-up-right" class="w-6 h-6 text-emerald-500"></i></div>
+                            <p class="text-xs font-black uppercase tracking-widest text-zinc-400">Piutang (Duit Keluar)</p>
+                        </div>
+                        <p id="total-lent" class="text-2xl md:text-3xl font-black text-zinc-800 dark:text-white tracking-tight">Rp 0</p>
+                    </div>
+
+                    <div class="bento-card p-6 border-b-4 border-rose-400 flex flex-col justify-between">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-3 bg-rose-500/10 rounded-2xl"><i data-lucide="arrow-down-left" class="w-6 h-6 text-rose-500"></i></div>
+                            <p class="text-xs font-black uppercase tracking-widest text-zinc-400">Utang (Harus Dibayar)</p>
+                        </div>
+                        <p id="total-debt" class="text-2xl md:text-3xl font-black text-zinc-800 dark:text-white tracking-tight">Rp 0</p>
+                    </div>
+                </div>
+
+                <!-- Right Chart -->
+                <div class="bento-card p-8 flex flex-col items-center justify-center relative min-h-[250px]">
+                    <h3 class="text-xs font-black text-zinc-400 uppercase tracking-widest mb-6 self-start w-full text-center">Chart Proporsi 📊</h3>
+                    <div class="relative w-full max-w-[200px] aspect-square mx-auto">
+                        <canvas id="debtChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CATAT TRANSAKSI -->
+        <div id="tab-catat" class="tab-content hidden max-w-2xl mx-auto space-y-6">
+            <header class="mb-6">
+                <h2 class="text-3xl font-black tracking-tighter">Spill Transaksi Baru 💸</h2>
+            </header>
+            
+            <div class="bento-card p-6 md:p-8">
+                <form id="debt-form" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Nama Relasi (Bestie/Vendor)</label>
+                        <input type="text" id="name" placeholder="Misal: Si Budi..." class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-brand-500 outline-none transition-all font-bold dark:text-white" required autocomplete="off">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Nominal (Rp)</label>
+                        <input type="number" id="amount" placeholder="150000" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-brand-500 outline-none transition-all font-bold dark:text-white text-xl" required min="1">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Deadline Bayar</label>
+                        <input type="date" id="due-date" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border-none focus:ring-2 focus:ring-brand-500 outline-none transition-all font-bold text-zinc-700 dark:text-white" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Ini Statusnya Apa?</label>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <label class="flex-1 relative cursor-pointer">
+                                <input type="radio" name="type" value="lent" class="peer hidden" checked>
+                                <div class="p-5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 transition-all text-center group hover:scale-[1.02]">
+                                    <i data-lucide="arrow-up-right" class="w-8 h-8 mx-auto text-emerald-500 mb-2 group-hover:-translate-y-1 transition-transform"></i>
+                                    <div class="font-black text-zinc-800 dark:text-zinc-100">Duit Keluar</div>
+                                    <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-1">Gue Ngutangin</div>
+                                </div>
+                            </label>
+                            <label class="flex-1 relative cursor-pointer">
+                                <input type="radio" name="type" value="owe" class="peer hidden">
+                                <div class="p-5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 border-2 border-transparent peer-checked:border-rose-500 peer-checked:bg-rose-500/10 transition-all text-center group hover:scale-[1.02]">
+                                    <i data-lucide="arrow-down-left" class="w-8 h-8 mx-auto text-rose-500 mb-2 group-hover:translate-y-1 transition-transform"></i>
+                                    <div class="font-black text-zinc-800 dark:text-zinc-100">Duit Masuk</div>
+                                    <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-1">Gue Minjem</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-brand-500 text-white py-4 rounded-2xl font-black text-lg hover:bg-brand-600 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-neon flex items-center justify-center gap-2 mt-4">
+                        <i data-lucide="check-check" class="w-6 h-6"></i> Simpan Record
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: DAFTAR TAGIHAN -->
+        <div id="tab-tagihan" class="tab-content hidden max-w-6xl mx-auto space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tighter">List Tagihan 📝</h2>
+                    <p class="text-zinc-500 mt-1 font-medium">Pantau siapa aja yang belum bayar.</p>
+                </div>
+                <div class="flex p-1.5 rounded-2xl bg-zinc-200/50 dark:bg-zinc-800/50 overflow-x-auto">
+                    <button onclick="setFilter('all')" id="btn-filter-all" class="px-5 py-2.5 text-xs font-black rounded-xl bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm transition-all">Semua</button>
+                    <button onclick="setFilter('unpaid')" id="btn-filter-unpaid" class="px-5 py-2.5 text-xs font-bold rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white transition-all">On Going</button>
+                    <button onclick="setFilter('paid')" id="btn-filter-paid" class="px-5 py-2.5 text-xs font-bold rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white transition-all">Udah Lunas 💯</button>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="relative w-full max-w-md bento-card p-2 flex items-center mb-6">
+                <i data-lucide="search" class="w-5 h-5 text-zinc-400 ml-3"></i>
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari nama bestie..." class="w-full bg-transparent border-none pl-3 pr-4 py-2 focus:outline-none focus:ring-0 font-bold dark:text-white text-sm">
+            </div>
+
+            <!-- Table View Bento Style -->
+            <div class="overflow-x-auto pb-6">
+                <table class="w-full text-left table-compact whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="w-1/4">Nama & Tipe</th>
+                            <th>Status Deadline</th>
+                            <th>Progress Bayar</th>
+                            <th>Sisa Tagihan</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body-tagihan" class="text-sm font-medium">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: DATA TEMAN (CREDIT SCORE) -->
+        <div id="tab-teman" class="tab-content hidden max-w-6xl mx-auto space-y-6">
+            <header class="mb-6">
+                <h2 class="text-3xl font-black tracking-tighter">Bestie Score 🌟</h2>
+                <p class="text-zinc-500 mt-1 font-medium">Cek reputasi temen lu sebelum minjemin duit lagi.</p>
+            </header>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left table-compact whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="w-1/4">User Profile</th>
+                            <th>Rating Stars</th>
+                            <th>Trust Score</th>
+                            <th>Histori Pinjaman</th>
+                            <th>Status / Badges</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body-teman" class="text-sm">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: BLACKLIST -->
+        <div id="tab-blacklist" class="tab-content hidden max-w-6xl mx-auto space-y-6">
+            <header class="mb-6 flex flex-col md:flex-row md:items-center gap-4">
+                <div class="p-4 bg-rose-500/10 rounded-2xl"><i data-lucide="skull" class="w-8 h-8 text-rose-500"></i></div>
+                <div>
+                    <h2 class="text-3xl font-black tracking-tighter text-rose-500">Red Flag Zone 🚩</h2>
+                    <p class="text-zinc-500 mt-1 font-medium">Mereka yang sering ngilang pas ditagih. JANGAN DIPINJEMIN!</p>
+                </div>
+            </header>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left table-compact whitespace-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="w-1/3">Tersangka</th>
+                            <th>Skor Terakhir</th>
+                            <th>Alasan</th>
+                            <th class="text-right">Aksi Pemaafan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body-blacklist" class="text-sm">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating FAQ Button -->
+    <button onclick="openModal('modal-faq')" class="fixed bottom-8 right-8 z-40 w-16 h-16 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all" title="Helpdesk & FAQ">
+        <i data-lucide="message-circle-question" class="w-7 h-7"></i>
+    </button>
+
+    <!-- Modal: FAQ / Helpdesk -->
+    <div id="modal-faq" class="modal-overlay">
+        <div class="bento-card p-6 md:p-8 w-11/12 max-w-lg transform transition-all scale-95 opacity-0 max-h-[85vh] overflow-y-auto no-scrollbar" id="modal-faq-content">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-black/5 dark:border-white/10">
+                <h3 class="font-black text-2xl flex items-center gap-2 tracking-tight"><i data-lucide="info" class="w-6 h-6 text-brand-500"></i> Helpdesk</h3>
+                <button onclick="closeModal('modal-faq')" class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl">
+                    <h4 class="font-black text-sm mb-2">Gimana sih sistem Bestie Score? 🤔</h4>
+                    <p class="text-xs text-zinc-500 leading-relaxed font-medium">Setiap temen mulai dengan modal skor 100. Bayar lunas nambah +5, telat deadline dikurangin -10. Kalau skor di bawah 30, otomatis masuk <strong class="text-rose-500">Red Flag Zone</strong>.</p>
+                </div>
+                <div class="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl">
+                    <h4 class="font-black text-sm mb-2">Red Flag Zone apaan tuh? 🚩</h4>
+                    <p class="text-xs text-zinc-500 leading-relaxed font-medium">Itu blacklist buat temen yang susah ditagih. Lu bisa klik "Maafin" biar skornya naik ke 60 dan dapet kesempatan kedua buat ngutang.</p>
+                </div>
+                <div class="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl">
+                    <h4 class="font-black text-sm mb-2">Bedanya Duit Keluar vs Duit Masuk? 💸</h4>
+                    <p class="text-xs text-zinc-500 leading-relaxed font-medium"><strong class="text-emerald-500">Duit Keluar (Piutang):</strong> Uang lu dipinjem temen.<br><strong class="text-rose-500">Duit Masuk (Hutang):</strong> Lu minjem uang temen.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Pay Installment -->
+    <div id="modal-installment" class="modal-overlay">
+        <div class="bento-card p-6 md:p-8 w-11/12 max-w-sm transform transition-all scale-95 opacity-0" id="modal-installment-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-xl flex items-center gap-2" id="inst-title">Terima Dana</h3>
+                <button onclick="closeModal('modal-installment')" class="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full text-zinc-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form id="installment-form" class="space-y-5">
+                <input type="hidden" id="inst-id">
+                <div>
+                    <div class="flex justify-between text-xs font-black mb-2 uppercase tracking-wide">
+                        <span class="text-zinc-500">Sisa Tagihan:</span>
+                        <span id="inst-sisa" class="text-rose-500">Rp 0</span>
+                    </div>
+                    <input type="number" id="inst-amount" placeholder="Input nominal" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-brand-500 font-black text-lg text-center" required min="1">
+                    
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" onclick="setQuickAmount(0.5)" class="flex-1 py-3 bg-zinc-200 dark:bg-zinc-700 rounded-xl text-xs font-bold transition-transform hover:scale-105 active:scale-95">Setengah</button>
+                        <button type="button" onclick="setQuickAmount(1)" class="flex-1 py-3 bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300 rounded-xl text-xs font-bold transition-transform hover:scale-105 active:scale-95">Lunasin Full</button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-4 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-2xl font-black flex justify-center items-center gap-2 hover:scale-[1.02] transition-transform">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i> Confirm
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Timeline & AI Message -->
+    <div id="modal-detail" class="modal-overlay">
+        <div class="bento-card p-6 md:p-8 w-11/12 max-w-md max-h-[85vh] overflow-y-auto no-scrollbar transform transition-all scale-95 opacity-0" id="modal-detail-content">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-black/5 dark:border-white/10 sticky top-0 bg-white/80 dark:bg-darkcard/80 backdrop-blur-md z-10">
+                <h3 class="font-black text-xl flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-500"></i> Histori Track</h3>
+                <button onclick="closeModal('modal-detail')" class="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full text-zinc-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div id="ai-suggestion" class="mb-6 p-5 bg-gradient-to-br from-brand-500/10 to-pink-500/10 rounded-2xl border border-brand-500/20">
+                <div class="flex gap-3">
+                    <div class="p-2 bg-brand-500 text-white rounded-xl h-fit"><i data-lucide="bot-message-square" class="w-5 h-5"></i></div>
+                    <div class="w-full">
+                        <p class="text-xs font-black text-brand-600 dark:text-brand-400 mb-2 uppercase tracking-wide">AI Auto-Tagih</p>
+                        <select id="ai-tone" class="w-full text-sm font-bold p-3 rounded-xl bg-white dark:bg-zinc-900 border-none outline-none focus:ring-2 focus:ring-brand-500 mb-3 shadow-sm">
+                            <option value="sopan">😇 Sopan (Aman Bro)</option>
+                            <option value="nyindir">🤡 Nyindir (Kopi Darat)</option>
+                            <option value="galak">😡 Ngegas (Woy Bayar!)</option>
+                            <option value="islami">🕌 Islami (Afwan Akhi)</option>
+                        </select>
+                        <button id="btn-wa-ai" class="w-full text-xs font-black bg-[#25D366] text-white py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i> Kirim via WA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="timeline-list" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-zinc-200 dark:before:bg-zinc-800">
+                <!-- Timeline injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: QR Code -->
+    <div id="modal-qr" class="modal-overlay">
+        <div class="bento-card p-6 md:p-8 w-11/12 max-w-sm text-center transform transition-all scale-95 opacity-0" id="modal-qr-content">
+            <div class="flex justify-start mb-4">
+                <button onclick="closeModal('modal-qr')" class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-zinc-200"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+            </div>
+            
+            <h3 class="font-black text-2xl mb-1 tracking-tight">Scan Qris / QR</h3>
+            <p class="text-xs text-zinc-500 mb-6 font-medium">Sodorin ini ke muka temen lu.</p>
+            
+            <div class="bg-white p-6 rounded-3xl inline-block mb-8 shadow-bento border border-zinc-100">
+                <div id="qrcode" class="mx-auto"></div>
+            </div>
+            
+            <button id="btn-simulate-qr" class="w-full py-4 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-2xl font-black flex justify-center items-center gap-2 hover:scale-[1.02] transition-transform">
+                <i data-lucide="scan-line" class="w-5 h-5"></i> Simulasi Dana Masuk
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        // --- DATA & STATE ---
+        let transactions = JSON.parse(localStorage.getItem('pihutang_tx_v2')) || [];
+        let contacts = JSON.parse(localStorage.getItem('pihutang_contacts_v2')) || {};
+        
+        let currentFilter = 'all'; 
+        let searchQuery = '';
+        let myChart = null;
+        let isDarkMode = false;
+
+        const formatRp = (num) => 'Rp ' + num.toLocaleString('id-ID');
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('due-date').setAttribute('min', today);
+            
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) toggleDarkMode(true);
+
+            initChart();
+            switchTab('dashboard');
+        });
+
+        function saveData() {
+            localStorage.setItem('pihutang_tx_v2', JSON.stringify(transactions));
+            localStorage.setItem('pihutang_contacts_v2', JSON.stringify(contacts));
+            
+            updateDashboard();
+            renderList();
+            renderTemanList();
+            renderBlacklistList();
+        }
+
+        // --- BACKUP & RESTORE ---
+        function downloadBackup() {
+            const data = { transactions, contacts, timestamp: new Date().toISOString(), version: "Gen-Z" };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = `PiHutang_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast('Data secured! 💾', 'success');
+        }
+
+        function restoreBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.transactions && data.contacts) {
+                        transactions = data.transactions; contacts = data.contacts; saveData();
+                        showToast('Restore sukses bos! 🎉', 'success');
+                    } else throw new Error();
+                } catch { showToast('File corrupt brok.', 'error'); }
+                event.target.value = ''; 
+            };
+            reader.readAsText(file);
+        }
+
+        // --- UI & TAB NAV ---
+        function toggleDarkMode(force) {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            isDarkMode = force !== undefined ? force : !html.classList.contains('dark');
+            
+            if (isDarkMode) { html.classList.add('dark'); icon.setAttribute('data-lucide', 'sun'); text.innerText="Light Mode"; } 
+            else { html.classList.remove('dark'); icon.setAttribute('data-lucide', 'moon'); text.innerText="Dark Mode"; }
+            
+            lucide.createIcons();
+            if(myChart) updateDashboard();
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if(sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.className = "sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all";
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) {
+                if(tabId === 'blacklist') {
+                    activeBtn.className = "sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm bg-rose-500 text-white transition-all hover:scale-[1.02] shadow-bento";
+                } else {
+                    activeBtn.className = "sidebar-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm bg-zinc-900 text-white dark:bg-white dark:text-black transition-all hover:scale-[1.02] shadow-bento";
+                }
+            }
+            
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'tagihan') renderList();
+            if (tabId === 'teman') renderTemanList();
+            if (tabId === 'blacklist') renderBlacklistList();
+            
+            if(window.innerWidth < 1024 && document.getElementById('sidebar-overlay').classList.contains('hidden') === false) toggleMobileSidebar();
+        }
+
+        // --- CORE LOGIC ---
+        function updateContactReputation(name, amount, type, action = 'add') {
+            name = name.trim().toUpperCase();
+            if (!contacts[name]) {
+                contacts[name] = { score: 100, badges: ['Newbie 👶'], isBlacklisted: false, totalLent: 0, totalPaid: 0 };
+            }
+            
+            let c = contacts[name];
+            if (action === 'add' && type === 'lent') {
+                c.totalLent += amount;
+                if (c.totalLent > 1000000 && !c.badges.includes('Suhu Ngutang 👑')) c.badges.push('Suhu Ngutang 👑');
+            } else if (action === 'pay') {
+                c.totalPaid += amount;
+                c.score = Math.min(100, c.score + 5); 
+                if (c.score === 100 && !c.badges.includes('Si Paling Lunas 💯')) c.badges.push('Si Paling Lunas 💯');
+            } else if (action === 'late') {
+                c.score = Math.max(0, c.score - 10);
+            }
+
+            if (c.score <= 30) {
+                c.isBlacklisted = true;
+                c.badges = ['Red Flag 🚩'];
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('debtChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Utang (Minus)', 'Piutang (Plus)'], datasets: [{ data: [0, 0], backgroundColor: ['#fb7185', '#34d399'], borderWidth: 0, hoverOffset: 4 }] },
+                options: { cutout: '75%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function updateDashboard() {
+            let totalDebt = 0; let totalLent = 0;
+            transactions.forEach(tx => {
+                if (!tx.isPaid) {
+                    const remaining = tx.amount - tx.paidAmount;
+                    if (tx.type === 'owe') totalDebt += remaining; else totalLent += remaining;
+                }
+            });
+
+            document.getElementById('total-debt').innerText = formatRp(totalDebt);
+            document.getElementById('total-lent').innerText = formatRp(totalLent);
+            document.getElementById('net-balance').innerText = formatRp(totalLent - totalDebt);
+            
+            if (myChart) {
+                if (totalDebt === 0 && totalLent === 0) {
+                    myChart.data.datasets[0].data = [1];
+                    myChart.data.datasets[0].backgroundColor = [isDarkMode ? '#27272a' : '#f4f4f5'];
+                } else {
+                    myChart.data.datasets[0].data = [totalDebt, totalLent];
+                    myChart.data.datasets[0].backgroundColor = ['#f43f5e', '#10b981']; // Rose & Emerald
+                }
+                myChart.update();
+            }
+        }
+
+        document.getElementById('debt-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const dueDate = document.getElementById('due-date').value;
+
+            if (amount <= 0) return showToast('Nominal ga valid cuy!', 'warning');
+
+            const c = contacts[name.toUpperCase()];
+            if (c && c.isBlacklisted && type === 'lent') {
+                showToast(`Si ${name} lagi di RED FLAG ZONE! Maafin dulu di menu Blacklist.`, 'error');
+                return;
+            }
+
+            const tx = {
+                id: Date.now(), name, amount, paidAmount: 0, type, dueDate, isPaid: false, createdAt: new Date().toISOString(),
+                timeline: [{ date: new Date().toISOString(), type: 'created', note: `Spill ${type === 'owe' ? 'utang' : 'piutang'} senilai ${formatRp(amount)}.` }]
+            };
+
+            transactions.push(tx); updateContactReputation(name, amount, type, 'add'); saveData(); e.target.reset();
+            showToast('Mantap! Record disave. 📓', 'success');
+            setTimeout(() => switchTab('tagihan'), 500);
+        });
+
+        function getPriorityBadge(dueDate, isPaid) {
+            if (isPaid) return '<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-500">LUNAS 💯</span>';
+            const diffDays = Math.ceil((new Date(dueDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return '<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 animate-pulse">OVERDUE ☠️</span>';
+            if (diffDays === 0) return '<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-600">HARI INI 🚨</span>';
+            if (diffDays <= 7) return `<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-brand-500/20 text-brand-600">H-${diffDays}</span>`;
+            return '<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-600">AMAN BREE</span>';
+        }
+
+        // --- RENDER TABLES ---
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            ['all', 'unpaid', 'paid'].forEach(btn => {
+                const el = document.getElementById(`btn-filter-${btn}`);
+                if (btn === filterType) { el.className = 'px-5 py-2.5 text-xs font-black rounded-xl bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm transition-all'; } 
+                else { el.className = 'px-5 py-2.5 text-xs font-bold rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-white transition-all'; }
+            });
+            renderList();
+        }
+
+        function handleSearch() { searchQuery = document.getElementById('search-input').value.toLowerCase(); renderList(); }
+
+        function renderList() {
+            const tbody = document.getElementById('table-body-tagihan'); tbody.innerHTML = '';
+            let filtered = transactions.filter(t => {
+                const matchFilter = (currentFilter === 'unpaid' && !t.isPaid) || (currentFilter === 'paid' && t.isPaid) || currentFilter === 'all';
+                const matchSearch = t.name.toLowerCase().includes(searchQuery);
+                return matchFilter && matchSearch;
+            }).sort((a, b) => a.isPaid === b.isPaid ? new Date(a.dueDate) - new Date(b.dueDate) : (a.isPaid ? 1 : -1));
+
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 font-bold text-zinc-400">Wah, kosong nih. Aman berarti! ✨</td></tr>`; return; }
+
+            filtered.forEach((t) => {
+                const badge = getPriorityBadge(t.dueDate, t.isPaid);
+                const progress = Math.min(100, Math.round((t.paidAmount / t.amount) * 100));
+                const remaining = t.amount - t.paidAmount;
+                const isPiutang = t.type === 'lent';
+                const typeText = isPiutang ? 'Duit Lu (Piutang)' : 'Lu Minjem (Hutang)';
+                const typeColor = isPiutang ? 'text-emerald-500' : 'text-rose-500';
+                
+                const tr = document.createElement('tr');
+                tr.className = t.isPaid ? 'opacity-60' : '';
+                tr.innerHTML = `
+                    <td>
+                        <p class="font-black text-lg ${t.isPaid ? 'line-through' : ''}">${t.name}</p>
+                        <p class="text-[10px] font-bold ${typeColor} uppercase mt-0.5 tracking-wider">${typeText}</p>
+                    </td>
+                    <td>
+                        <p class="text-xs mb-1.5 font-bold text-zinc-500">${new Date(t.dueDate).toLocaleDateString('id-ID')}</p>
+                        ${badge}
+                    </td>
+                    <td class="w-1/4">
+                        <div class="w-full bg-black/5 dark:bg-white/10 rounded-full h-2 mb-1.5 overflow-hidden">
+                            <div class="bg-brand-500 h-2 rounded-full relative" style="width: ${progress}%">
+                                <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/30 rounded-full blur-[2px]"></div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase">Terkumpul: ${formatRp(t.paidAmount)}</p>
+                    </td>
+                    <td>
+                        <p class="font-black text-lg">${formatRp(remaining)}</p>
+                        <p class="text-[10px] text-zinc-400 font-bold">Total: ${formatRp(t.amount)}</p>
+                    </td>
+                    <td class="text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            ${!t.isPaid ? `
+                                <button onclick="openInstallmentModal(${t.id})" class="p-2.5 bg-zinc-100 hover:bg-emerald-100 text-zinc-600 hover:text-emerald-600 dark:bg-zinc-800 dark:hover:bg-emerald-500/20 dark:text-zinc-400 dark:hover:text-emerald-400 rounded-xl transition-colors" title="Bayar">
+                                    <i data-lucide="hand-coins" class="w-4 h-4"></i>
+                                </button>
+                                ${isPiutang ? `
+                                <button onclick="openQrModal(${t.id})" class="p-2.5 bg-zinc-100 hover:bg-brand-100 text-zinc-600 hover:text-brand-600 dark:bg-zinc-800 dark:hover:bg-brand-500/20 dark:text-zinc-400 dark:hover:text-brand-400 rounded-xl transition-colors" title="QR Code">
+                                    <i data-lucide="qr-code" class="w-4 h-4"></i>
+                                </button>
+                                ` : ''}
+                            ` : ''}
+                            <button onclick="openDetailModal(${t.id})" class="p-2.5 bg-zinc-100 hover:bg-blue-100 text-zinc-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-500/20 dark:text-zinc-400 dark:hover:text-blue-400 rounded-xl transition-colors" title="Detail Track">
+                                <i data-lucide="list-collapse" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteTx(${t.id})" class="p-2.5 bg-zinc-100 hover:bg-rose-100 text-zinc-600 hover:text-rose-600 dark:bg-zinc-800 dark:hover:bg-rose-500/20 dark:text-zinc-400 dark:hover:text-rose-400 rounded-xl transition-colors" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        const getStars = (score) => '⭐'.repeat(Math.ceil(Math.max(1, score)/20));
+
+        function renderTemanList() {
+            const tbody = document.getElementById('table-body-teman'); tbody.innerHTML = '';
+            const contactKeys = Object.keys(contacts);
+            if(contactKeys.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 font-bold text-zinc-400">Belum ada bestie di data lu.</td></tr>`; return; }
+
+            contactKeys.forEach(name => {
+                const c = contacts[name];
+                const scoreColor = c.isBlacklisted ? 'text-rose-500' : (c.score > 70 ? 'text-emerald-500' : 'text-amber-500');
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-black text-lg capitalize flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-black">${name.charAt(0)}</div>
+                        ${name}
+                    </td>
+                    <td class="text-sm tracking-widest">${getStars(c.score)}</td>
+                    <td class="font-black text-xl ${scoreColor}">${c.score} <span class="text-xs text-zinc-400 font-bold">/ 100</span></td>
+                    <td class="text-sm font-bold">${formatRp(c.totalLent)}</td>
+                    <td>
+                        <div class="flex gap-1 flex-wrap">
+                            ${c.badges.map(b => `<span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 uppercase tracking-wider">${b}</span>`).join('')}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderBlacklistList() {
+            const tbody = document.getElementById('table-body-blacklist'); tbody.innerHTML = '';
+            const blacklisted = Object.keys(contacts).filter(k => contacts[k].isBlacklisted);
+            if(blacklisted.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-emerald-500 font-black"><i data-lucide="shield-check" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>Aman Bos! Gaada red flag.</td></tr>`; lucide.createIcons(); return; }
+
+            blacklisted.forEach(name => {
+                const c = contacts[name];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-black text-lg capitalize flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500"></i> ${name}
+                    </td>
+                    <td class="font-black text-xl text-rose-500">${c.score}</td>
+                    <td class="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider">Sering Telat / Nunggak</td>
+                    <td class="text-right">
+                        <button onclick="forgiveContact('${name}')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition-all shadow-md hover:scale-105 inline-flex items-center gap-1.5">
+                            <i data-lucide="heart-handshake" class="w-4 h-4"></i> Maafin Aja
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function forgiveContact(name) {
+            if(confirm(`Yakin maafin si ${name}? Dia bakal bisa dipinjemin duit lagi ntar.`)) {
+                contacts[name].score = 60; contacts[name].isBlacklisted = false; contacts[name].badges = ['Dimaafin 🕊️'];
+                saveData(); showToast(`${name} udah dimaafin. Pantau terus yak!`, 'success');
+            }
+        }
+
+        // --- MODALS ---
+        function openModal(id) {
+            const modal = document.getElementById(id); const content = document.getElementById(id + '-content');
+            modal.classList.add('active');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+        function closeModal(id) {
+            const modal = document.getElementById(id); const content = document.getElementById(id + '-content');
+            content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.remove('active'); }, 200);
+        }
+
+        // INSTALLMENT
+        function setQuickAmount(multiplier) {
+            const id = parseInt(document.getElementById('inst-id').value);
+            const t = transactions.find(x => x.id === id);
+            if(t) document.getElementById('inst-amount').value = Math.floor((t.amount - t.paidAmount) * multiplier);
+        }
+
+        function openInstallmentModal(id) {
+            const t = transactions.find(x => x.id === id); if(!t) return;
+            document.getElementById('inst-title').innerHTML = t.type === 'lent' ? '<i data-lucide="hand-coins" class="w-5 h-5 text-emerald-500"></i> Terima Duit' : '<i data-lucide="wallet" class="w-5 h-5 text-rose-500"></i> Bayar Utang';
+            document.getElementById('inst-id').value = t.id;
+            document.getElementById('inst-sisa').innerText = formatRp(t.amount - t.paidAmount);
+            document.getElementById('inst-amount').max = t.amount - t.paidAmount;
+            document.getElementById('inst-amount').value = '';
+            document.getElementById('installment-form').reset();
+            openModal('modal-installment'); lucide.createIcons();
+        }
+
+        document.getElementById('installment-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('inst-id').value);
+            const payAmount = parseFloat(document.getElementById('inst-amount').value);
+            const t = transactions.find(x => x.id === id);
+            
+            if(!t || payAmount <= 0 || payAmount > (t.amount - t.paidAmount)) return showToast('Nominal ngaco brok!', 'error');
+
+            t.paidAmount += payAmount;
+            t.timeline.push({ date: new Date().toISOString(), type: 'payment', note: `Bayar cicilan / masuk ${formatRp(payAmount)}` });
+
+            if (t.paidAmount >= t.amount) { t.isPaid = true; showToast(`Tagihan ${t.name} LUNAS BOSS! 🎉`, 'success'); triggerConfetti(); } 
+            else { showToast(`Duit masuk: ${formatRp(payAmount)}`, 'info'); }
+
+            updateContactReputation(t.name, payAmount, t.type, 'pay'); saveData(); closeModal('modal-installment');
+        });
+
+        // DETAIL / TIMELINE
+        function openDetailModal(id) {
+            const t = transactions.find(x => x.id === id); if(!t) return;
+            const list = document.getElementById('timeline-list'); list.innerHTML = '';
+            
+            [...t.timeline].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                const d = new Date(item.date); const isPay = item.type === 'payment';
+                list.innerHTML += `
+                    <div class="relative pl-8 py-3 group">
+                        <div class="absolute left-[-10px] top-4 w-6 h-6 rounded-full ${isPay ? 'bg-emerald-500' : 'bg-brand-500'} flex items-center justify-center shadow-md z-10 ring-4 ring-white dark:ring-darkcard">
+                            ${isPay ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : '<i data-lucide="zap" class="w-3 h-3 text-white"></i>'}
+                        </div>
+                        <div class="bg-zinc-100 dark:bg-zinc-800/80 p-3.5 rounded-2xl">
+                            <span class="block text-[10px] text-zinc-400 font-bold mb-1 tracking-wider uppercase">${d.toLocaleDateString('id-ID')} ${d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <p class="text-sm font-bold">${item.note}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const aiBox = document.getElementById('ai-suggestion');
+            if (t.isPaid || t.type === 'owe') { aiBox.style.display = 'none'; } 
+            else {
+                aiBox.style.display = 'block';
+                document.getElementById('btn-wa-ai').onclick = () => {
+                    const tone = document.getElementById('ai-tone').value; const sisa = t.amount - t.paidAmount; let msg = "";
+                    if(tone==='sopan') msg = `Halo bro ${t.name}, sorry ganggu. Ngingetin aja nih soal tagihan ${formatRp(sisa)}. Kabarin yak kalo udah bisa dicover! 🙏`;
+                    else if(tone==='nyindir') msg = `Wah si ${t.name} asik bener nih nongkrong teros hehe. Btw tagihan ${formatRp(sisa)} aman? Kopi darat yuk sekalian settle hehe ☕️`;
+                    else if(tone==='galak') msg = `Woy ${t.name}, utang lu ${formatRp(sisa)} buruan lunasin! Udah deket deadline nih, jangan ngilang lu! 😡`;
+                    else msg = `Assalamualaikum akhi/ukhti ${t.name}, afwan. Sekadar mengingatkan tanggungan antum ${formatRp(sisa)}. Semoga dilancarkan rezekinya biar cepet lunas ya, Aamiin 😇`;
+                    
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                    t.timeline.push({ date: new Date().toISOString(), type: 'remind', note: `Spam WA dikirim (Style: ${tone}).` });
+                    saveData();
+                };
+            }
+            openModal('modal-detail'); lucide.createIcons();
+        }
+
+        // QR
+        let activeQrTxId = null;
+        function openQrModal(id) {
+            const t = transactions.find(x => x.id === id); if(!t) return;
+            activeQrTxId = id; const qrContainer = document.getElementById('qrcode'); qrContainer.innerHTML = '';
+            new QRCode(qrContainer, { text: `PAY|${t.name}|${t.amount - t.paidAmount}|${id}`, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff" });
+            openModal('modal-qr');
+        }
+
+        document.getElementById('btn-simulate-qr').addEventListener('click', () => {
+            if(!activeQrTxId) return;
+            const t = transactions.find(x => x.id === activeQrTxId);
+            if(t) {
+                const sisa = t.amount - t.paidAmount;
+                t.paidAmount = t.amount; t.isPaid = true;
+                t.timeline.push({ date: new Date().toISOString(), type: 'payment', note: `Lunas via Scan QR (${formatRp(sisa)}).` });
+                updateContactReputation(t.name, sisa, t.type, 'pay'); saveData(); closeModal('modal-qr');
+                showToast(`Dana masuk via QR! 🤑`, 'success'); triggerConfetti();
+            }
+        });
+
+        function deleteTx(id) {
+            if(confirm("Yakin hapus data tagihan ini bro?")) {
+                transactions = transactions.filter(t => t.id !== id); saveData(); showToast('Data dihapus.', 'info');
+            }
+        }
+
+        function triggerConfetti() {
+            var duration = 3000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#8b5cf6', '#10b981', '#f43f5e'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#8b5cf6', '#10b981', '#f43f5e'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
+            let style = 'bg-zinc-900 text-white'; let icon = 'info';
+            if (type === 'success') { style = 'bg-emerald-500 text-white'; icon = 'check-circle-2'; }
+            if (type === 'error') { style = 'bg-rose-500 text-white'; icon = 'alert-triangle'; }
+            if (type === 'warning') { style = 'bg-amber-500 text-white'; icon = 'bell-ring'; }
+
+            toast.className = `toast-enter flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl pointer-events-auto max-w-sm font-bold ${style}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><p class="text-sm leading-snug">${message}</p>`;
+            
+            container.appendChild(toast); lucide.createIcons();
+            setTimeout(() => { toast.classList.replace('toast-enter', 'opacity-0'); setTimeout(()=>toast.remove(), 300); }, 3000);
+        }
+    </script>
+</body>
+</html>
